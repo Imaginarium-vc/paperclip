@@ -91,6 +91,24 @@ export function createBetterAuthInstance(db: Db, config: Config, trustedOrigins?
       requireEmailVerification: false,
       disableSignUp: config.authDisableSignUp,
     },
+    ...(config.authAllowedEmailDomains.length > 0
+      ? {
+          databaseHooks: {
+            user: {
+              create: {
+                before: async (user: { email?: string | null }) => {
+                  const email = user.email ?? "";
+                  const domain = email.split("@")[1]?.toLowerCase() ?? "";
+                  const allowed = config.authAllowedEmailDomains.some(
+                    (d) => d.toLowerCase() === domain,
+                  );
+                  if (!allowed) return false;
+                },
+              },
+            },
+          },
+        }
+      : {}),
     ...(isHttpOnly ? { advanced: { useSecureCookies: false } } : {}),
   };
 
