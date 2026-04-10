@@ -1,6 +1,6 @@
 import type { Request, RequestHandler } from "express";
 import type { IncomingHttpHeaders } from "node:http";
-import { betterAuth } from "better-auth";
+import { betterAuth, APIError } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { toNodeHandler } from "better-auth/node";
 import type { Db } from "@paperclipai/db";
@@ -113,7 +113,9 @@ export function createBetterAuthInstance(db: Db, config: Config, trustedOrigins?
               create: {
                 before: async (user: { email?: string | null }) => {
                   if (!isEmailDomainAllowed(user.email, config.authAllowedEmailDomains)) {
-                    return false;
+                    throw new APIError("FORBIDDEN", {
+                      message: "Email domain is not allowed",
+                    });
                   }
                 },
               },
